@@ -8,7 +8,6 @@ import {ToastContainer} from "react-toastify";
 import Header from "./Header";
 import CartPage from "../order/CartPage";
 import HistoryPage from '../order/HistoryPage';
-import StatsPage from '../stats/StatsPage';
 import { BrowserRouter as Router, Route, Switch } from "react-router-dom";
 import 'react-toastify/dist/ReactToastify.min.css';
 import NotFound from "./NotFound";
@@ -32,7 +31,6 @@ class App extends Component {
             <Switch>
               <Route path="/cart" component={CartPage} />
               <Route path="/history" component={HistoryPage} />
-              <Route path="/stats" component={StatsPage} />
               <Route path="/articles" component={ArticlePage} />
               <Route component={NotFound} />
             </Switch>

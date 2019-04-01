@@ -55,7 +55,7 @@ const Header = ({performLogout}) => (
             <Nav.Link href="/mono/history">History</Nav.Link>
           </Nav.Item>
           <Nav.Item>
-            <Nav.Link href="/mono/stats">Stats</Nav.Link>
+            <Nav.Link href="/stats/stat-order">Stats micro</Nav.Link>
           </Nav.Item>
           <Nav.Item>
             <LinkContainer to={"/user/userActivity"} >

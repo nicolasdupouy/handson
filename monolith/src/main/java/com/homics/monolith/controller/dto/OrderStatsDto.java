@@ -1,5 +1,7 @@
 package com.homics.monolith.controller.dto;
 
+// TODO 3.4
+//  Remove this class, it won't be used anymore.
 public class OrderStatsDto {
     private Long nbOrder;
     private Double avgPrice;
