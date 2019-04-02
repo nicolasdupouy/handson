@@ -26,12 +26,10 @@ public class OrderStatsService {
         this.orderStatsRepository = orderStatsRepository;
     }
 
+    @KafkaListener(topics = TOPIC_STATS, groupId = GROUP_ID, containerFactory = IMPACT_STOCK_MESSAGE_FACTORY)
     public void onImpactStockMessage(@Payload OrderPayedMessage orderPayedMessage) {
-        // TODO 4.2.1: Consume the OrderPayedMessage sent by the monolith to Kafka.
-        //  Use the @KafkaListener with the right topics and ID. The containerFactory is IMPACT_STOCK_MESSAGE_FACTORY.
-
-        // TODO 4.2.2: Save the message
-        //  Save the stats from orderPayedMessage
+        logger.info(String.format("#### -> Consuming OrderPayedMessage -> %s", orderPayedMessage));
+        orderStatsRepository.save(new OrderStats(orderPayedMessage.getOrderId(), orderPayedMessage.getOrderPrice(), orderPayedMessage.getUser()));
     }
 
     public OrderStatsDto getStats() {
