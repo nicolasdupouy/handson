@@ -2,8 +2,7 @@
 
 # Set port for micro-service
 server:
-  # TODO 1.1.2: change port to 9001
-  port: 8080
+  port: 9001
 
 spring:
 
