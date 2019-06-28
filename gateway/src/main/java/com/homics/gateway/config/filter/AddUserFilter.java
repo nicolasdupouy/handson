@@ -18,10 +18,13 @@ public class AddUserFilter extends ZuulFilter {
 
     @Override
     public Object run() {
-        // TODO 2.3:
-        //  You need to add in the current context the name of the logged user with the header USER_HEADER_NAME
-        //  There is a function addZuulRequestHeader.
+        addZuulRequestHeader();
         return null;
+    }
+
+    private void addZuulRequestHeader() {
+        RequestContext context = RequestContext.getCurrentContext();
+        context.put(USER_HEADER_NAME, authenticationFacade.getLoggedUserName());
     }
 
     @Override
