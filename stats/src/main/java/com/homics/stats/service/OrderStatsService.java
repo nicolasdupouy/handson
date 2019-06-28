@@ -1,5 +1,8 @@
 package com.homics.stats.service;
 
+import com.homics.messaging.config.KafkaConfig;
+import com.homics.messaging.config.KafkaConsumerConfig;
+import com.homics.messaging.config.KafkaTopicConfig;
 import com.homics.messaging.model.OrderPayedMessage;
 import com.homics.stats.config.UserStore;
 import com.homics.stats.controller.dto.OrderStatsDto;
@@ -11,11 +14,6 @@ import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
 
-import static com.homics.messaging.config.KafkaConfig.GROUP_ID;
-import static com.homics.messaging.config.KafkaConsumerConfig.IMPACT_STOCK_MESSAGE_FACTORY;
-import static com.homics.messaging.config.KafkaTopicConfig.TOPIC_STATS;
-
-
 @Service
 public class OrderStatsService {
 
@@ -26,12 +24,10 @@ public class OrderStatsService {
         this.orderStatsRepository = orderStatsRepository;
     }
 
+    @KafkaListener(topics = KafkaTopicConfig.TOPIC_STATS, groupId = KafkaConfig.GROUP_ID, containerFactory = KafkaConsumerConfig.IMPACT_STOCK_MESSAGE_FACTORY)
     public void onImpactStockMessage(@Payload OrderPayedMessage orderPayedMessage) {
-        // TODO 4.2.1: Consume the OrderPayedMessage sent by the monolith to Kafka.
-        //  Use the @KafkaListener with the right topics and ID. The containerFactory is IMPACT_STOCK_MESSAGE_FACTORY.
-
-        // TODO 4.2.2: Save the message
-        //  Save the stats from orderPayedMessage
+        logger.info(String.format("Consuming OrderPayedMessage -> %s", orderPayedMessage));
+        this.orderStatsRepository.save(new OrderStats(orderPayedMessage.getOrderId(), orderPayedMessage.getOrderPrice(), orderPayedMessage.getUser()));
     }
 
     public OrderStatsDto getStats() {
