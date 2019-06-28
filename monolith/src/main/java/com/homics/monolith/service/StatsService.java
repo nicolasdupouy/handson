@@ -1,5 +1,6 @@
 package com.homics.monolith.service;
 
+import com.homics.messaging.config.KafkaTopicConfig;
 import com.homics.messaging.model.OrderPayedMessage;
 import com.homics.monolith.model.Order;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -25,10 +26,15 @@ public class StatsService {
     //
     // Starting from this exercise, we send the stats directly via Kafka.
 
-    public void sendStat(Order order) {
+    void sendStat(Order order) {
         // TODO 4.1.1: Send a OrderPayedMessage to the stats microservice via kafka.
         //  Use the MessageBuilder from springkafka to generate this message.
         //  Set the topic to 'TOPIC_STATS' from the common-messaging lib.
         //  Then send it with the kafkaTemplate.
+        Message<OrderPayedMessage> message = MessageBuilder
+                .withPayload(order.buildOrderPayedMessage())
+                .setHeader(KafkaHeaders.TOPIC, KafkaTopicConfig.TOPIC_STATS)
+                .build();
+        this.kafkaTemplate.send(message);
     }
 }

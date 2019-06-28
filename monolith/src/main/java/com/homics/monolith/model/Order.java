@@ -1,5 +1,7 @@
 package com.homics.monolith.model;
 
+import com.homics.messaging.model.OrderPayedMessage;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,5 +76,9 @@ public class Order {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public OrderPayedMessage buildOrderPayedMessage() {
+        return new OrderPayedMessage(id, totalPrice, user);
     }
 }
