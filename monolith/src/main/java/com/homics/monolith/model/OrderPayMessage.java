@@ -1,9 +1,8 @@
 package com.homics.monolith.model;
 
+import com.homics.monolith.controller.dto.OrderPayMessageDto;
+
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Objects;
 
 @Entity
 public class OrderPayMessage {
@@ -20,6 +19,10 @@ public class OrderPayMessage {
 
     public OrderPayMessage(Order order) {
         this.order = order;
+    }
+
+    public OrderPayMessageDto extractMessageDto() {
+        return order.extractMessageDto();
     }
 
     public Long getId() {

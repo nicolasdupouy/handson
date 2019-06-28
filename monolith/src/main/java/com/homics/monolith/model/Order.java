@@ -1,5 +1,7 @@
 package com.homics.monolith.model;
 
+import com.homics.monolith.controller.dto.OrderPayMessageDto;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
@@ -74,5 +76,9 @@ public class Order {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    OrderPayMessageDto extractMessageDto() {
+        return new OrderPayMessageDto(id, totalPrice, user);
     }
 }
