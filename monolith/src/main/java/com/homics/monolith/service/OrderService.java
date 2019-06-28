@@ -1,7 +1,6 @@
 package com.homics.monolith.service;
 
 import com.homics.monolith.config.UserStore;
-import com.homics.monolith.controller.dto.OrderStatsDto;
 import com.homics.monolith.model.Article;
 import com.homics.monolith.model.Order;
 import com.homics.monolith.model.OrderLine;
@@ -35,7 +34,7 @@ public class OrderService {
         return orderRepository.getPayedOrder(UserStore.getUserName());
     }
 
-    public Order getOrderById(Long id) {
+    Order getOrderById(Long id) {
         return orderRepository.findById(id).orElse(null);
     }
 
@@ -78,7 +77,7 @@ public class OrderService {
     }
 
     @Transactional
-    public void payOrder(Order order) {
+    void payOrder(Order order) {
         validateOrderStock(order);
         order.setStatus(OrderStatus.PAYED);
         orderRepository.save(order);
@@ -99,15 +98,6 @@ public class OrderService {
                 throw new ValidationException("The stock is no longer available");
             }
         });
-    }
-
-    // TODO 3.4
-    //  Clean this method, it won't be use anymore.
-    public OrderStatsDto getStats() {
-        String user = UserStore.getUserName();
-        Long count = orderRepository.getOrderCount(user);
-        Double avg = orderRepository.getOrderAvg(user);
-        return new OrderStatsDto(count, avg);
     }
 
     public void removeOrderLine(Long orderId, Long orderLineId) {
