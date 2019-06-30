@@ -1,9 +1,8 @@
 package com.homics.monolith.service;
 
-import com.homics.messaging.model.ArticleStockDto;
+import com.homics.messaging.config.KafkaTopicConfig;
 import com.homics.messaging.model.ImpactStockMessage;
 import com.homics.monolith.model.Order;
-import com.homics.monolith.model.OrderLine;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.core.KafkaTemplate;
@@ -12,23 +11,23 @@ import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
-import java.util.stream.Collectors;
-
-import static com.homics.messaging.config.KafkaTopicConfig.TOPIC_IMPACT_STOCK;
-
 
 @Service
 public class StockService {
 
+    private final Logger logger = LoggerFactory.getLogger(StockService.class);
     private KafkaTemplate<String, ImpactStockMessage> kafkaTemplate;
 
     public StockService(KafkaTemplate<String, ImpactStockMessage> kafkaTemplate) {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void impactStock(Order order) {
-        // TODO 5.1.3
-        //  Send ImpactStockMessage on TOPIC_IMPACT_STOCK using kafka.
+    void impactStock(Order order) {
+        logger.info("Send order: " + order);
+        Message<ImpactStockMessage> message = MessageBuilder
+                .withPayload(order.buildImpactStockMessage())
+                .setHeader(KafkaHeaders.TOPIC, KafkaTopicConfig.TOPIC_IMPACT_STOCK)
+                .build();
+        this.kafkaTemplate.send(message);
     }
 }

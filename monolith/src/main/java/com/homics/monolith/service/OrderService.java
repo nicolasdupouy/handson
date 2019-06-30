@@ -6,13 +6,11 @@ import com.homics.monolith.model.Article;
 import com.homics.monolith.model.Order;
 import com.homics.monolith.model.OrderLine;
 import com.homics.monolith.model.OrderStatus;
-import com.homics.monolith.repository.ArticleRepository;
 import com.homics.monolith.repository.OrderLineRepository;
 import com.homics.monolith.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import javax.validation.ValidationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -20,27 +18,26 @@ import java.util.Optional;
 public class OrderService {
 
     private OrderRepository orderRepository;
-    private ArticleRepository articleRepository;
     private OrderLineRepository orderLineRepository;
     private ArticleService articleService;
     private StatsService statsService;
     private StockService stockService;
 
-    public OrderService(OrderRepository orderRepository, OrderLineRepository orderLineRepository, ArticleService articleService,
-                        ArticleRepository articleRepository, StockService stockService, StatsService statsService) {
+    public OrderService(OrderRepository orderRepository, OrderLineRepository orderLineRepository,
+                        ArticleService articleService,
+                        StockService stockService, StatsService statsService) {
         this.articleService = articleService;
         this.stockService = stockService;
         this.statsService = statsService;
         this.orderRepository = orderRepository;
         this.orderLineRepository = orderLineRepository;
-        this.articleRepository = articleRepository;
     }
 
     public List<Order> getPayedOrCancelledOrders() {
         return orderRepository.getPayedOrCancelledOrder(UserStore.getUserName());
     }
 
-    public Order getOrderById(Long id) {
+    Order getOrderById(Long id) {
         return orderRepository.findById(id).get();
     }
 
@@ -83,31 +80,8 @@ public class OrderService {
     }
 
     @Transactional
-    public void payOrder(Order order) {
-        //TODO 5.1.2
-        // Remove stock validation since it's now handle in the microservice Stock.
-        // Remove the order update (the status PAYED will be set when the microservice has decreased the stock).
-        // Call the stock service to impact the stock
-        validateOrderStock(order);
-        order.setStatus(OrderStatus.PAYED);
-        orderRepository.save(order);
-        impactArticleStock(order);
-    }
-
-    private void impactArticleStock(Order order) {
-        order.getOrderLines().forEach(orderLine -> impactArticleStock(orderLine.getArticle(), orderLine.getQuantity()));
-    }
-
-    private void impactArticleStock(Article article, Integer quantity) {
-        articleRepository.decrementStock(article.getId(), quantity);
-    }
-
-    private void validateOrderStock(Order order) {
-        order.getOrderLines().forEach(line -> {
-            if (line.getQuantity() > line.getArticle().getStock()) {
-                throw new ValidationException("The stock is no longer available");
-            }
-        });
+    void payOrder(Order order) {
+        stockService.impactStock(order);
     }
 
     public void removeOrderLine(Long orderId, Long orderLineId) {

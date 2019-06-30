@@ -1,9 +1,13 @@
 package com.homics.monolith.model;
 
+import com.homics.messaging.model.ArticleStockDto;
+import com.homics.messaging.model.ImpactStockMessage;
+
 import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Entity
 @Table(name = "order_table")
@@ -74,5 +78,16 @@ public class Order {
     @Override
     public int hashCode() {
         return Objects.hash(id);
+    }
+
+    public ImpactStockMessage buildImpactStockMessage() {
+        List<ArticleStockDto> articleStockDtos = getOrderLines().stream()
+                .map(orderLine ->
+                        new ArticleStockDto(
+                                orderLine.getArticle().getId(),
+                                orderLine.getQuantity().longValue()
+                        ))
+                .collect(Collectors.toList());
+        return new ImpactStockMessage(id, articleStockDtos);
     }
 }
