@@ -1,16 +1,15 @@
 package com.homics.stock.service;
 
 
+import com.homics.messaging.config.KafkaConfig;
+import com.homics.messaging.config.KafkaConsumerConfig;
+import com.homics.messaging.config.KafkaTopicConfig;
 import com.homics.messaging.model.ImpactStockMessage;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.kafka.annotation.KafkaListener;
 import org.springframework.messaging.handler.annotation.Payload;
 import org.springframework.stereotype.Service;
-
-import static com.homics.messaging.config.KafkaConfig.GROUP_ID;
-import static com.homics.messaging.config.KafkaConsumerConfig.IMPACT_STOCK_MESSAGE_FACTORY;
-import static com.homics.messaging.config.KafkaTopicConfig.TOPIC_IMPACT_STOCK;
 
 @Service
 public class ImpactStockConsumer {
@@ -22,11 +21,10 @@ public class ImpactStockConsumer {
         this.stockService = stockService;
     }
 
-
-    public void onImpactStockMessage() {
-        // TODO 5.2.1
-        //  Consume ImpactStockMessage from TOPIC_IMPACT_STOCK
-        //  Call the service with the messages for treatment.
+    @KafkaListener(topics = KafkaTopicConfig.TOPIC_IMPACT_STOCK, groupId = KafkaConfig.GROUP_ID, containerFactory = KafkaConsumerConfig.IMPACT_STOCK_MESSAGE_FACTORY)
+    public void onImpactStockMessage(@Payload ImpactStockMessage impactStockMessage) {
+        logger.info(String.format("Consuming ImpactStockMessage -> %s", impactStockMessage));
+        this.stockService.impactStock(impactStockMessage);
     }
 
 }

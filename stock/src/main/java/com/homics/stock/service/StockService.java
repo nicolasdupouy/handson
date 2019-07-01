@@ -31,27 +31,22 @@ public class StockService {
 
     @Transactional
     public void impactStock(ImpactStockMessage impactStockMessage) {
-        if (operationAlreadyProcess(null)) {
+        Long operationId = impactStockMessage.getOperationId();
+        if (operationAlreadyProcess(operationId)) {
             return;
         }
         try {
             verifyAvailableStocks(impactStockMessage);
             impactStocks(impactStockMessage);
-            // TODO 5.2.3
-            //  notify kafka that the stock changes has been made.
+            stockAcknowledgmentProducer.notifyStockChanges(operationId, true);
+            stockOperationDao.save(new StockOperation(operationId));
         } catch (ValidationException e) {
-            // TODO 5.2.4
-            //  notify kafka that the stock changes couldn't be done.
-        } finally {
-            // TODO 5.2.5
-            //  save the operation as processed, so it won't be process several times.
+            stockAcknowledgmentProducer.notifyStockChanges(operationId, false);
         }
     }
 
     private boolean operationAlreadyProcess(Long operationId) {
-        // TODO 5.2.2
-        //  verify if the operation wasn't already process
-        return false;
+        return stockOperationDao.existsById(operationId);
     }
 
     private void verifyAvailableStocks(ImpactStockMessage impactStockMessage) throws ValidationException {

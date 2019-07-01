@@ -1,6 +1,7 @@
 package com.homics.stock.service;
 
 
+import com.homics.messaging.config.KafkaTopicConfig;
 import com.homics.messaging.model.ImpactStockMessage;
 import com.homics.messaging.model.StockAcknowledgmentMessage;
 import org.slf4j.Logger;
@@ -10,8 +11,6 @@ import org.springframework.kafka.support.KafkaHeaders;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.support.MessageBuilder;
 import org.springframework.stereotype.Service;
-
-import static com.homics.messaging.config.KafkaTopicConfig.TOPIC_ACKNOWLEDGE_STOCK;
 
 @Service
 public class StockAcknowledgmentProducer {
@@ -23,9 +22,16 @@ public class StockAcknowledgmentProducer {
         this.kafkaTemplate = kafkaTemplate;
     }
 
-    public void notifyStockChanges(Long operationId, boolean success) {
+    void notifyStockChanges(Long operationId, boolean success) {
         logger.info(String.format("#### -> Sending StockAcknowledgmentMessage success: %s", success));
-        // TODO 5.2.6
-        //  notify kafka that the stock changes has be done.
+        Message<StockAcknowledgmentMessage> message = MessageBuilder
+                .withPayload(buildStockAcknowledgmentMessage(operationId, success))
+                .setHeader(KafkaHeaders.TOPIC, KafkaTopicConfig.TOPIC_ACKNOWLEDGE_STOCK)
+                .build();
+        this.kafkaTemplate.send(message);
+    }
+
+    private StockAcknowledgmentMessage buildStockAcknowledgmentMessage(Long operationId, boolean success) {
+        return new StockAcknowledgmentMessage(operationId, success);
     }
 }
