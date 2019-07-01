@@ -98,11 +98,21 @@ public class OrderService {
 
     @Transactional
     public void updateOrderStatus(StockAcknowledgmentMessage message) {
-        // TODO 5.3.1
-        //  The StockAcknowledgmentMessage has been read from kafka.
-        //  The order status need to be set to PAYED or CANCELLED
+        Order order = orderRepository.getOne(message.getOperationId());
+        if (message.isSucceed())
+            updatePaidOrder(order);
+        else
+            updateUnpaidOrder(order);
+    }
 
-        //TODO 5.3.2
-        // Update stats in case of success
+    private void updatePaidOrder(Order order) {
+        order.setStatus(OrderStatus.PAYED);
+        orderRepository.save(order);
+        statsService.sendStat(order);
+    }
+
+    private void updateUnpaidOrder(Order order) {
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
     }
 }
