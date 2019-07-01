@@ -85,7 +85,7 @@ public class Order {
                 .map(orderLine ->
                         new ArticleStockDto(
                                 orderLine.getArticle().getId(),
-                                orderLine.getQuantity().longValue()
+                                -orderLine.getQuantity().longValue()
                         ))
                 .collect(Collectors.toList());
         return new ImpactStockMessage(id, articleStockDtos);
