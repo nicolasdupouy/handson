@@ -1,0 +1,7 @@
+version: "3"
+services:
+  gateway:
+    image: homics_gateway
+    container_name: homics-gateway
+    ports:
+      - "8080:8080"
