@@ -29,7 +29,7 @@ services:
     ports:
       - "8080:8080"
     networks:
-    - homics-network
+      - homics-network
   user-activity:
     build:
       context: .
@@ -38,7 +38,9 @@ services:
     ports:
       - "9001:9001"
     networks:
-    - homics-network
+      - homics-network
+    links:
+      - gateway
   stats:
     build:
       context: .
@@ -47,7 +49,12 @@ services:
     ports:
       - "9002:9002"
     networks:
-    - homics-network
+      - homics-network
+    links:
+      - gateway
+      - user-activity
+      - zookeeper
+      - kafka
   stock:
     build:
       context: .
@@ -56,7 +63,12 @@ services:
     ports:
       - "9003:9003"
     networks:
-    - homics-network
+      - homics-network
+    links:
+      - gateway
+      - user-activity
+      - zookeeper
+      - kafka
   monolith:
     build:
       context: .
@@ -65,7 +77,14 @@ services:
     ports:
       - "8090:8090"
     networks:
-    - homics-network
+      - homics-network
+    links:
+      - gateway
+      - user-activity
+      - zookeeper
+      - kafka
+      - stats
+      - stock
     depends_on:
       - zookeeper
       - kafka
