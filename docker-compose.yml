@@ -1,0 +1,92 @@
+version: "3"
+services:
+  zookeeper:
+    image: wurstmeister/zookeeper
+    container_name: homics-zookeeper
+    ports:
+      - "2181:2181"
+    networks:
+      - homics-network
+  kafka:
+    image: wurstmeister/kafka:1.0.0
+    container_name: homics-kafka
+    ports:
+      - "9092:9092"
+    networks:
+    - homics-network
+    environment:
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://localhost:9092
+      KAFKA_ADVERTISED_HOST_NAME: localhost
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_NUM_PARTITIONS: 1
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+  gateway:
+    build:
+      context: .
+      dockerfile: gateway/Dockerfile
+    container_name: homics-gateway
+    ports:
+      - "8080:8080"
+    networks:
+      - homics-network
+  user-activity:
+    build:
+      context: .
+      dockerfile: user-activity/Dockerfile
+    container_name: homics-user-activity
+    ports:
+      - "9001:9001"
+    networks:
+      - homics-network
+    links:
+      - gateway
+  stats:
+    build:
+      context: .
+      dockerfile: stats/Dockerfile
+    container_name: homics-stats
+    ports:
+      - "9002:9002"
+    networks:
+      - homics-network
+    links:
+      - gateway
+      - user-activity
+      - zookeeper
+      - kafka
+  stock:
+    build:
+      context: .
+      dockerfile: stock/Dockerfile
+    container_name: homics-stock
+    ports:
+      - "9003:9003"
+    networks:
+      - homics-network
+    links:
+      - gateway
+      - user-activity
+      - zookeeper
+      - kafka
+  monolith:
+    build:
+      context: .
+      dockerfile: monolith/Dockerfile
+    container_name: homics-monolith
+    ports:
+      - "8090:8090"
+    networks:
+      - homics-network
+    links:
+      - gateway
+      - user-activity
+      - zookeeper
+      - kafka
+      - stats
+      - stock
+    depends_on:
+      - zookeeper
+      - kafka
+networks:
+  homics-network:
