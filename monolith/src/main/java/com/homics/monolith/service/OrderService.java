@@ -1,17 +1,16 @@
 package com.homics.monolith.service;
 
-import com.homics.monolith.controller.dto.OrderStatsDto;
+import com.homics.messaging.model.StockAcknowledgmentMessage;
+import com.homics.monolith.config.UserStore;
 import com.homics.monolith.model.Article;
 import com.homics.monolith.model.Order;
 import com.homics.monolith.model.OrderLine;
 import com.homics.monolith.model.OrderStatus;
-import com.homics.monolith.repository.ArticleRepository;
 import com.homics.monolith.repository.OrderLineRepository;
 import com.homics.monolith.repository.OrderRepository;
 import org.springframework.stereotype.Service;
 
 import javax.transaction.Transactional;
-import javax.validation.ValidationException;
 import java.util.List;
 import java.util.Optional;
 
@@ -19,36 +18,38 @@ import java.util.Optional;
 public class OrderService {
 
     private OrderRepository orderRepository;
-    private ArticleRepository articleRepository;
     private OrderLineRepository orderLineRepository;
     private ArticleService articleService;
-    private AuthenticationFacade authenticationFacade;
+    private StatsService statsService;
+    private StockService stockService;
 
-    public OrderService(OrderRepository orderRepository, OrderLineRepository orderLineRepository, ArticleService articleService, ArticleRepository articleRepository, AuthenticationFacade authenticationFacade) {
+    public OrderService(OrderRepository orderRepository, OrderLineRepository orderLineRepository,
+                        ArticleService articleService,
+                        StockService stockService, StatsService statsService) {
         this.articleService = articleService;
+        this.stockService = stockService;
+        this.statsService = statsService;
         this.orderRepository = orderRepository;
         this.orderLineRepository = orderLineRepository;
-        this.articleRepository = articleRepository;
-        this.authenticationFacade = authenticationFacade;
     }
 
-    public List<Order> getPayedOrders() {
-        return orderRepository.getPayedOrder(authenticationFacade.getLoggedUserName());
+    public List<Order> getPayedOrCancelledOrders() {
+        return orderRepository.getPayedOrCancelledOrder(UserStore.getUserName());
     }
 
-    private Order getOrderById(Long id) {
-        return orderRepository.findById(id).orElse(null);
+    Order getOrderById(Long id) {
+        return orderRepository.findById(id).get();
     }
 
     private Order getCurrentOrder() {
-        return orderRepository.getCurrentOrder(authenticationFacade.getLoggedUserName());
+        return orderRepository.getCurrentOrder(UserStore.getUserName());
     }
 
     public Order getCurrentOrCreateOrder() {
         Order order = getCurrentOrder();
         if (order == null) {
             order = new Order();
-            order.setUser(authenticationFacade.getLoggedUserName());
+            order.setUser(UserStore.getUserName());
             order.setStatus(OrderStatus.PENDING);
             order = orderRepository.save(order);
         }
@@ -79,35 +80,8 @@ public class OrderService {
     }
 
     @Transactional
-    public void payOrder(Long orderId) {
-        Order order = getOrderById(orderId);
-        validateOrderStock(order);
-        order.setStatus(OrderStatus.PAYED);
-        orderRepository.save(order);
-        impactArticleStock(order);
-    }
-
-    private void impactArticleStock(Order order) {
-        order.getOrderLines().forEach(orderLine -> impactArticleStock(orderLine.getArticle(), orderLine.getQuantity()));
-    }
-
-    private void impactArticleStock(Article article, Integer quantity) {
-        articleRepository.decrementStock(article.getId(), quantity);
-    }
-
-    private void validateOrderStock(Order order) {
-        order.getOrderLines().forEach(line -> {
-            if (line.getQuantity() > line.getArticle().getStock()) {
-                throw new ValidationException("The stock is no longer available");
-            }
-        });
-    }
-
-    public OrderStatsDto getStats() {
-        String user = authenticationFacade.getLoggedUserName();
-        Long count = orderRepository.getOrderCount(user);
-        Double avg = orderRepository.getOrderAvg(user);
-        return new OrderStatsDto(count, avg);
+    void payOrder(Order order) {
+        stockService.impactStock(order);
     }
 
     public void removeOrderLine(Long orderId, Long orderLineId) {
@@ -120,5 +94,25 @@ public class OrderService {
 
     private void refreshTotalPrice(Order order) {
         order.setTotalPrice(order.getOrderLines().stream().mapToDouble(line -> line.getArticle().getPrice() * line.getQuantity()).sum());
+    }
+
+    @Transactional
+    public void updateOrderStatus(StockAcknowledgmentMessage message) {
+        Order order = orderRepository.getOne(message.getOperationId());
+        if (message.isSucceed())
+            updatePaidOrder(order);
+        else
+            updateUnpaidOrder(order);
+    }
+
+    private void updatePaidOrder(Order order) {
+        order.setStatus(OrderStatus.PAYED);
+        orderRepository.save(order);
+        statsService.sendStat(order);
+    }
+
+    private void updateUnpaidOrder(Order order) {
+        order.setStatus(OrderStatus.CANCELLED);
+        orderRepository.save(order);
     }
 }

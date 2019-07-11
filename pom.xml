@@ -12,6 +12,10 @@
 
     <modules>
         <module>monolith</module>
+        <module>user-activity</module>
+        <module>gateway</module>
+        <module>stats</module>
+        <module>stock</module>
     </modules>
 
     <dependencyManagement>

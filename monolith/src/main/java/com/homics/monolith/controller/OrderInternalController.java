@@ -1,9 +1,9 @@
 package com.homics.monolith.controller;
 
 import com.homics.monolith.controller.dto.ArticleDto;
-import com.homics.monolith.controller.dto.OrderStatsDto;
 import com.homics.monolith.model.Order;
 import com.homics.monolith.service.OrderService;
+import com.homics.monolith.service.PayOrderService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -13,9 +13,11 @@ import java.util.List;
 public class OrderInternalController {
 
     private OrderService orderService;
+    private PayOrderService payOrderService;
 
-    public OrderInternalController(OrderService orderService) {
+    public OrderInternalController(OrderService orderService, PayOrderService payOrderService) {
         this.orderService = orderService;
+        this.payOrderService = payOrderService;
     }
 
     @GetMapping("/current")
@@ -25,12 +27,7 @@ public class OrderInternalController {
 
     @GetMapping("/history")
     public List<Order> getHistory() {
-        return orderService.getPayedOrders();
-    }
-
-    @GetMapping("/stats")
-    public OrderStatsDto getStats() {
-        return orderService.getStats();
+        return orderService.getPayedOrCancelledOrders();
     }
 
     @PostMapping("/{orderId}/add-article")
@@ -45,6 +42,6 @@ public class OrderInternalController {
 
     @PostMapping("/{orderId}/pay")
     public void payOrder(@PathVariable Long orderId) {
-        orderService.payOrder(orderId);
+        payOrderService.payOrder(orderId);
     }
 }
